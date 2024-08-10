@@ -51,6 +51,7 @@ android {
 
 dependencies {
 
+    implementation ("com.google.code.gson:gson:2.8.9")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("androidx.core:core-ktx:1.7.0")
     implementation("androidx.appcompat:appcompat:1.4.0")
@@ -64,6 +65,7 @@ dependencies {
     implementation("androidx.compose.material:material:1.4.0")
     implementation("androidx.compose.ui:ui-tooling-preview:1.4.0")
     implementation(libs.androidx.material3.android)
+    implementation(libs.firebase.crashlytics.buildtools)
     debugImplementation("androidx.compose.ui:ui-tooling:1.4.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.3")
