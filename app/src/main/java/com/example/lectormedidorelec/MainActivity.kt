@@ -133,6 +133,23 @@ fun MainScreen(onScanClick: () -> Unit) {
 
         Button(
             onClick = {
+                if (meterData.isNotEmpty()) {
+                    meterData = meterData.dropLast(1)
+                    saveMeterData(context, meterData)
+                    Toast.makeText(context, "Último consumo eliminado", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(context, "No hay consumos para eliminar", Toast.LENGTH_LONG).show()
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Eliminar Último Consumo")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = {
                 meterData = emptyList()
                 saveMeterData(context, meterData)
                 Toast.makeText(context, "Medidores borrados", Toast.LENGTH_LONG).show()
