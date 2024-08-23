@@ -1,4 +1,4 @@
-package com.example.lectormedidorelec.ui.theme
+package com.App.lectormedidorelec.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

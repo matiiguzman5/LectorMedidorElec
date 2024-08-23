@@ -1,9 +1,12 @@
-package com.example.lectormedidorelec
+package com.App.lectormedidorelec
 
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -20,12 +23,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.lectormedidorelec.ui.theme.LectorMedidorElecTheme
+import com.App.lectormedidorelec.ui.theme.LectorMedidorElecTheme
 import com.google.firebase.crashlytics.buildtools.reloc.com.google.common.reflect.TypeToken
 import com.google.gson.Gson
 import com.google.zxing.integration.android.IntentIntegrator
 import java.io.File
 import java.io.FileOutputStream
+import java.io.OutputStream
 
 
 class MainActivity : ComponentActivity() {
@@ -158,19 +162,14 @@ fun MainScreen(onScanClick: () -> Unit) {
         ) {
             Text("Borrar")
         }
-
         Button(
             onClick = {
-                saveDataToFile(context, meterData)
+                saveDataToFiles(context, meterData)
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Descargar a txt")
+            Text("Descargar a Archivos")
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-
     }
 }
 
@@ -195,16 +194,37 @@ fun loadMeterData(context: Context): List<Pair<String, String>> {
     }
 }
 
-fun saveDataToFile(context: android.content.Context, meterData: List<Pair<String, String>>) {
-    val downloadsDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-    val file = File(downloadsDirectory, "consumos.txt")
-    FileOutputStream(file).use { fos ->
-        meterData.forEach { (meter, consumption) ->
-            fos.write("$meter,$consumption\n".toByteArray())
+fun saveDataToFiles(context: Context, meterData: List<Pair<String, String>>) {
+    val filename = "consumos.txt"
+    val contentResolver = context.contentResolver
+
+    val contentValues = ContentValues().apply {
+        put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
+        put(MediaStore.MediaColumns.MIME_TYPE, "text/plain")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS)
         }
     }
-    Toast.makeText(context, "Archivo guardado en: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+
+    val uri = contentResolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
+
+    if (uri != null) {
+        contentResolver.openOutputStream(uri)?.use { outputStream ->
+            writeDataToStream(outputStream, meterData)
+            Toast.makeText(context, "Archivo guardado en 'Archivos': ${filename}", Toast.LENGTH_LONG).show()
+        }
+    } else {
+        Toast.makeText(context, "Error al guardar el archivo", Toast.LENGTH_LONG).show()
+    }
 }
+
+    private fun writeDataToStream(outputStream: OutputStream, meterData: List<Pair<String, String>>) {
+        outputStream.bufferedWriter().use { writer ->
+            meterData.forEach { (meter, consumption) ->
+                writer.write("$meter,$consumption\n")
+            }
+        }
+    }
 
 @Preview(showBackground = true)
 @Composable

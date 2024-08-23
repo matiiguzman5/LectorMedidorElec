@@ -1,4 +1,4 @@
-package com.example.lectormedidorelec
+package com.App.lectormedidorelec
 
 import org.junit.Test
 

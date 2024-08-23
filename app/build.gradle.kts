@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.lectormedidorelec"
+    namespace = "com.App.lectormedidorelec"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.lectormedidorelec"
+        applicationId = "com.App.lectormedidorelec"
         minSdk = 24
         targetSdk = 33
         versionCode = 1

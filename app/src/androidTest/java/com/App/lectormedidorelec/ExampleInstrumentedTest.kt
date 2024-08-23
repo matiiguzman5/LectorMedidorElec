@@ -1,4 +1,4 @@
-package com.example.lectormedidorelec
+package com.App.lectormedidorelec
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
