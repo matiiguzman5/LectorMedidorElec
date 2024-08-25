@@ -27,6 +27,7 @@ import com.App.lectormedidorelec.ui.theme.LectorMedidorElecTheme
 import com.google.firebase.crashlytics.buildtools.reloc.com.google.common.reflect.TypeToken
 import com.google.gson.Gson
 import com.google.zxing.integration.android.IntentIntegrator
+import androidx.compose.material.AlertDialog
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStream
@@ -77,6 +78,7 @@ fun MainScreen(onScanClick: () -> Unit) {
     var meterData by remember {
         mutableStateOf(loadMeterData(context))
     }
+    var showDialog by remember { mutableStateOf(false) } // Estado para controlar la visibilidad del diálogo
 
     Column(
         modifier = Modifier
@@ -137,17 +139,42 @@ fun MainScreen(onScanClick: () -> Unit) {
 
         Button(
             onClick = {
-                if (meterData.isNotEmpty()) {
-                    meterData = meterData.dropLast(1)
-                    saveMeterData(context, meterData)
-                    Toast.makeText(context, "Último consumo eliminado", Toast.LENGTH_LONG).show()
-                } else {
-                    Toast.makeText(context, "No hay consumos para eliminar", Toast.LENGTH_LONG).show()
-                }
+                showDialog = true
             },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Eliminar Último Consumo")
+        }
+
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                title = { Text(text = "Confirmación") },
+                text = { Text("¿Estás seguro de que quieres borrar el último consumo?") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            if (meterData.isNotEmpty()) {
+                                meterData = meterData.dropLast(1)
+                                saveMeterData(context, meterData)
+                                Toast.makeText(context, "Último consumo eliminado", Toast.LENGTH_LONG).show()
+                            } else {
+                                Toast.makeText(context, "No hay consumos para eliminar", Toast.LENGTH_LONG).show()
+                            }
+                            showDialog = false
+                        }
+                    ) {
+                        Text("Sí")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showDialog = false }
+                    ) {
+                        Text("No")
+                    }
+                }
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -162,6 +189,7 @@ fun MainScreen(onScanClick: () -> Unit) {
         ) {
             Text("Borrar")
         }
+
         Button(
             onClick = {
                 saveDataToFiles(context, meterData)
