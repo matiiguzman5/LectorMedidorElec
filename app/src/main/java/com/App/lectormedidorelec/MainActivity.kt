@@ -78,7 +78,10 @@ fun MainScreen(onScanClick: () -> Unit) {
     var meterData by remember {
         mutableStateOf(loadMeterData(context))
     }
-    var showDialog by remember { mutableStateOf(false) } // Estado para controlar la visibilidad del diálogo
+    var manualBarcode by remember { mutableStateOf("") } // Estado para el ingreso manual del código de barras
+    var showDialog by remember { mutableStateOf(false) } // Para el diálogo de eliminar el último consumo
+    var showDeleteAllDialog by remember { mutableStateOf(false) } // Para el diálogo de eliminar todos los consumos
+    var deleteConfirmationText by remember { mutableStateOf("") } // Texto que el usuario debe ingresar para confirmar
 
     Column(
         modifier = Modifier
@@ -97,6 +100,15 @@ fun MainScreen(onScanClick: () -> Unit) {
         Spacer(modifier = Modifier.height(16.dp))
 
         TextField(
+            value = manualBarcode,
+            onValueChange = { manualBarcode = it },
+            label = { Text("Ingresar código de barras manualmente") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        TextField(
             value = consumption,
             onValueChange = { consumption = it },
             label = { Text("Ingresar consumo eléctrico") },
@@ -107,7 +119,13 @@ fun MainScreen(onScanClick: () -> Unit) {
 
         Button(
             onClick = {
-                if (MainActivity.currentCode != null && consumption.isNotBlank()) {
+                if (manualBarcode.isNotBlank() && consumption.isNotBlank()) {
+                    meterData = meterData + (manualBarcode to consumption)
+                    saveMeterData(context, meterData)
+                    Log.d("MainScreen", "Código y consumo agregados manualmente: $manualBarcode - $consumption")
+                    manualBarcode = "" // Reiniciar el campo del código de barras manual
+                    consumption = "" // Reiniciar el campo de consumo
+                } else if (MainActivity.currentCode != null && consumption.isNotBlank()) {
                     meterData = meterData + (MainActivity.currentCode!! to consumption)
                     saveMeterData(context, meterData)
                     Log.d("MainScreen", "Código y consumo agregados: ${MainActivity.currentCode} - $consumption")
@@ -139,7 +157,7 @@ fun MainScreen(onScanClick: () -> Unit) {
 
         Button(
             onClick = {
-                showDialog = true
+                showDialog = true // Mostrar el diálogo de confirmación para eliminar el último consumo
             },
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -181,14 +199,60 @@ fun MainScreen(onScanClick: () -> Unit) {
 
         Button(
             onClick = {
-                meterData = emptyList()
-                saveMeterData(context, meterData)
-                Toast.makeText(context, "Medidores borrados", Toast.LENGTH_LONG).show()
+                showDeleteAllDialog = true // Mostrar el diálogo de confirmación para eliminar todos los consumos
             },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Borrar")
         }
+
+        if (showDeleteAllDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteAllDialog = false },
+                title = { Text(text = "Confirmación") },
+                text = {
+                    Column {
+                        Text("Para eliminar todos los consumos, escribe 'BORRAR' abajo:")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        TextField(
+                            value = deleteConfirmationText,
+                            onValueChange = { deleteConfirmationText = it },
+                            label = { Text("Escribe BORRAR") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            if (deleteConfirmationText == "BORRAR") {
+                                meterData = emptyList()
+                                saveMeterData(context, meterData)
+                                Toast.makeText(context, "Todos los medidores han sido borrados", Toast.LENGTH_LONG).show()
+                                deleteConfirmationText = "" // Reiniciar el texto del campo
+                                showDeleteAllDialog = false
+                            } else {
+                                Toast.makeText(context, "Texto incorrecto. Escribe 'BORRAR' para confirmar.", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    ) {
+                        Text("Confirmar")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            deleteConfirmationText = "" // Reiniciar el texto del campo
+                            showDeleteAllDialog = false
+                        }
+                    ) {
+                        Text("Cancelar")
+                    }
+                }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             onClick = {
