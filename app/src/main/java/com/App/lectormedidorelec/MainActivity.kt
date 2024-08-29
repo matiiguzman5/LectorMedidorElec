@@ -16,6 +16,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,6 +29,8 @@ import com.google.firebase.crashlytics.buildtools.reloc.com.google.common.reflec
 import com.google.gson.Gson
 import com.google.zxing.integration.android.IntentIntegrator
 import androidx.compose.material.AlertDialog
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStream
@@ -103,6 +106,10 @@ fun MainScreen(onScanClick: () -> Unit) {
             value = manualBarcode,
             onValueChange = { manualBarcode = it },
             label = { Text("Ingresar código de barras manualmente") },
+            keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Next
+            ),
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -112,6 +119,10 @@ fun MainScreen(onScanClick: () -> Unit) {
             value = consumption,
             onValueChange = { consumption = it },
             label = { Text("Ingresar consumo eléctrico") },
+            keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Number, // Teclado numérico
+                imeAction = ImeAction.Done
+            ),
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -119,18 +130,20 @@ fun MainScreen(onScanClick: () -> Unit) {
 
         Button(
             onClick = {
-                if (manualBarcode.isNotBlank() && consumption.isNotBlank()) {
-                    meterData = meterData + (manualBarcode to consumption)
-                    saveMeterData(context, meterData)
-                    Log.d("MainScreen", "Código y consumo agregados manualmente: $manualBarcode - $consumption")
-                    manualBarcode = "" // Reiniciar el campo del código de barras manual
-                    consumption = "" // Reiniciar el campo de consumo
-                } else if (MainActivity.currentCode != null && consumption.isNotBlank()) {
-                    meterData = meterData + (MainActivity.currentCode!! to consumption)
-                    saveMeterData(context, meterData)
-                    Log.d("MainScreen", "Código y consumo agregados: ${MainActivity.currentCode} - $consumption")
-                    MainActivity.currentCode = null
-                    consumption = ""
+                val barcodeToCheck = if (manualBarcode.isNotBlank()) manualBarcode else MainActivity.currentCode
+                if (barcodeToCheck != null && consumption.isNotBlank()) {
+                    // Verificar si el número de medidor ya existe
+                    val exists = meterData.any { it.first == barcodeToCheck }
+                    if (!exists) {
+                        meterData = meterData + (barcodeToCheck to consumption)
+                        saveMeterData(context, meterData)
+                        Log.d("MainScreen", "Código y consumo agregados: $barcodeToCheck - $consumption")
+                        manualBarcode = ""
+                        MainActivity.currentCode = null
+                        consumption = ""
+                    } else {
+                        Toast.makeText(context, "Este medidor ya fue agregado.", Toast.LENGTH_LONG).show()
+                    }
                 } else {
                     Log.d("MainScreen", "Falta código o consumo")
                     Toast.makeText(context, "Ingrese un código de barras y un consumo", Toast.LENGTH_LONG).show()
@@ -157,7 +170,7 @@ fun MainScreen(onScanClick: () -> Unit) {
 
         Button(
             onClick = {
-                showDialog = true // Mostrar el diálogo de confirmación para eliminar el último consumo
+                showDialog = true
             },
             modifier = Modifier.fillMaxWidth()
         ) {
