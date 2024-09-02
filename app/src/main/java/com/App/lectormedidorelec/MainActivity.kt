@@ -50,7 +50,7 @@ class MainActivity : ComponentActivity() {
         ) { result ->
             val intentResult = IntentIntegrator.parseActivityResult(result.resultCode, result.data)
             if (intentResult != null && intentResult.contents != null) {
-                val scannedCode = intentResult.contents
+                val scannedCode = intentResult.contents.filter { it.isDigit() }
                 currentCode = scannedCode
                 Log.d("MainActivity", "Código escaneado: $scannedCode")
                 Toast.makeText(this, "Código escaneado: $scannedCode", Toast.LENGTH_LONG).show()
@@ -109,7 +109,8 @@ fun MainScreen(onScanClick: () -> Unit) {
 
         TextField(
             value = manualBarcode,
-            onValueChange = { manualBarcode = it },
+            onValueChange = { input ->
+                manualBarcode = input.filter { it.isDigit() }},
             label = { Text("Ingresar código de barras manualmente") },
             keyboardOptions = KeyboardOptions.Default.copy(
                 keyboardType = KeyboardType.Number,
@@ -131,7 +132,9 @@ fun MainScreen(onScanClick: () -> Unit) {
 
         TextField(
             value = consumption,
-            onValueChange = { consumption = it },
+            onValueChange = { input ->
+                consumption = input.filter { it.isDigit() } // Filtrar solo números
+            },
             label = { Text("Ingresar consumo eléctrico") },
             keyboardOptions = KeyboardOptions.Default.copy(
                 keyboardType = KeyboardType.Number,

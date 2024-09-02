@@ -10,7 +10,7 @@ android {
     defaultConfig {
         applicationId = "com.App.lectormedidorelec"
         minSdk = 24
-        targetSdk = 33
+        targetSdk = 34
         versionCode = 4
         versionName = "4.0"
 
