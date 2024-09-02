@@ -29,6 +29,9 @@ import com.google.firebase.crashlytics.buildtools.reloc.com.google.common.reflec
 import com.google.gson.Gson
 import com.google.zxing.integration.android.IntentIntegrator
 import androidx.compose.material.AlertDialog
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import java.io.File
@@ -85,6 +88,8 @@ fun MainScreen(onScanClick: () -> Unit) {
     var showDialog by remember { mutableStateOf(false) } // Para el diálogo de eliminar el último consumo
     var showDeleteAllDialog by remember { mutableStateOf(false) } // Para el diálogo de eliminar todos los consumos
     var deleteConfirmationText by remember { mutableStateOf("") } // Texto que el usuario debe ingresar para confirmar
+    val focusRequesterConsumption = remember { FocusRequester() }
+
 
     Column(
         modifier = Modifier
@@ -110,20 +115,36 @@ fun MainScreen(onScanClick: () -> Unit) {
                 keyboardType = KeyboardType.Number,
                 imeAction = ImeAction.Next
             ),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = TextFieldDefaults.textFieldColors(
+                backgroundColor = androidx.compose.ui.graphics.Color(0xFFFFCDD2),
+                focusedIndicatorColor = androidx.compose.ui.graphics.Color(0xFFC62828),
+                unfocusedIndicatorColor = androidx.compose.ui.graphics.Color(0xFFB71C1C)
+            )
         )
 
         Spacer(modifier = Modifier.height(16.dp))
+        
+        Text(text =  "Ingreso de Consumo", style = MaterialTheme.typography.h6)
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         TextField(
             value = consumption,
             onValueChange = { consumption = it },
             label = { Text("Ingresar consumo eléctrico") },
             keyboardOptions = KeyboardOptions.Default.copy(
-                keyboardType = KeyboardType.Number, // Teclado numérico
+                keyboardType = KeyboardType.Number,
                 imeAction = ImeAction.Done
             ),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(focusRequesterConsumption),
+            colors = TextFieldDefaults.textFieldColors(
+                backgroundColor = androidx.compose.ui.graphics.Color(0xFFBBDEFB), // Azul claro (Color de fondo)
+                focusedIndicatorColor = androidx.compose.ui.graphics.Color(0xFF1976D2), // Azul oscuro (Color del borde cuando está enfocado)
+                unfocusedIndicatorColor = androidx.compose.ui.graphics.Color(0xFF0D47A1)
+            )
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -132,7 +153,6 @@ fun MainScreen(onScanClick: () -> Unit) {
             onClick = {
                 val barcodeToCheck = if (manualBarcode.isNotBlank()) manualBarcode else MainActivity.currentCode
                 if (barcodeToCheck != null && consumption.isNotBlank()) {
-                    // Verificar si el número de medidor ya existe
                     val exists = meterData.any { it.first == barcodeToCheck }
                     if (!exists) {
                         meterData = meterData + (barcodeToCheck to consumption)
@@ -151,15 +171,19 @@ fun MainScreen(onScanClick: () -> Unit) {
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Listo")
+            Text("Guardar")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(text = "Medidores Cargados:", style = MaterialTheme.typography.h6)
-        LazyColumn(modifier = Modifier.fillMaxSize().weight(1f)) {
+        LazyColumn(modifier = Modifier
+            .fillMaxSize()
+            .weight(1f)) {
             items(meterData) { (meter, consumption) ->
-                Row(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+                Row(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)) {
                     Text(text = meter, modifier = Modifier.weight(1f))
                     Text(text = consumption, modifier = Modifier.weight(1f))
                 }
