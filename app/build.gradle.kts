@@ -9,10 +9,10 @@ android {
 
     defaultConfig {
         applicationId = "com.App.lectormedidorelec"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
-        versionCode = 4
-        versionName = "4.0"
+        versionCode = 5
+        versionName = "5.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -45,6 +45,11 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/DEPENDENCIES"
+            excludes += "META-INF/LICENSE"
+            excludes += "META-INF/LICENSE.txt"
+            excludes += "META-INF/NOTICE"
+            excludes += "META-INF/NOTICE.txt"
         }
     }
 }
@@ -52,6 +57,8 @@ android {
 dependencies {
 
     implementation ("com.google.code.gson:gson:2.8.9")
+    implementation ("org.apache.poi:poi:5.2.3")
+    implementation ("org.apache.poi:poi-ooxml:5.2.3")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("androidx.core:core-ktx:1.7.0")
     implementation("androidx.appcompat:appcompat:1.4.0")

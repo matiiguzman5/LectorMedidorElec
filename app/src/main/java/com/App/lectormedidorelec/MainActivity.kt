@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.provider.MediaStore.Audio.Media
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -34,6 +35,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStream
@@ -105,27 +107,8 @@ fun MainScreen(onScanClick: () -> Unit) {
             Text("Escanear Código de Barras")
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
-        TextField(
-            value = manualBarcode,
-            onValueChange = { input ->
-                manualBarcode = input.filter { it.isDigit() }},
-            label = { Text("Ingresar código de barras manualmente") },
-            keyboardOptions = KeyboardOptions.Default.copy(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Next
-            ),
-            modifier = Modifier.fillMaxWidth(),
-            colors = TextFieldDefaults.textFieldColors(
-                backgroundColor = androidx.compose.ui.graphics.Color(0xFFFFCDD2),
-                focusedIndicatorColor = androidx.compose.ui.graphics.Color(0xFFC62828),
-                unfocusedIndicatorColor = androidx.compose.ui.graphics.Color(0xFFB71C1C)
-            )
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-        
         Text(text =  "Ingreso de Consumo", style = MaterialTheme.typography.h6)
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -133,7 +116,7 @@ fun MainScreen(onScanClick: () -> Unit) {
         TextField(
             value = consumption,
             onValueChange = { input ->
-                consumption = input.filter { it.isDigit() } // Filtrar solo números
+                consumption = input.filter { it.isDigit() } // Filtrado solo números
             },
             label = { Text("Ingresar consumo eléctrico") },
             keyboardOptions = KeyboardOptions.Default.copy(
@@ -147,6 +130,25 @@ fun MainScreen(onScanClick: () -> Unit) {
                 backgroundColor = androidx.compose.ui.graphics.Color(0xFFBBDEFB), // Azul claro (Color de fondo)
                 focusedIndicatorColor = androidx.compose.ui.graphics.Color(0xFF1976D2), // Azul oscuro (Color del borde cuando está enfocado)
                 unfocusedIndicatorColor = androidx.compose.ui.graphics.Color(0xFF0D47A1)
+            )
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        TextField(
+            value = manualBarcode,
+            onValueChange = { input ->
+                manualBarcode = input.filter { it.isDigit() }},
+            label = { Text("Codigo de barras manualmente") },
+            keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Next
+            ),
+            modifier = Modifier.fillMaxWidth(),
+            colors = TextFieldDefaults.textFieldColors(
+                backgroundColor = androidx.compose.ui.graphics.Color(0xFFFFCDD2),
+                focusedIndicatorColor = androidx.compose.ui.graphics.Color(0xFFC62828),
+                unfocusedIndicatorColor = androidx.compose.ui.graphics.Color(0xFFB71C1C)
             )
         )
 
@@ -235,7 +237,7 @@ fun MainScreen(onScanClick: () -> Unit) {
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         Button(
             onClick = {
@@ -292,7 +294,7 @@ fun MainScreen(onScanClick: () -> Unit) {
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         Button(
             onClick = {
@@ -302,8 +304,53 @@ fun MainScreen(onScanClick: () -> Unit) {
         ) {
             Text("Descargar a Archivos")
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = {
+                exportDataToExcel(context, meterData)
+            }, modifier = Modifier.fillMaxWidth()) {
+            Text ("Descargar a Excel")
+        }
     }
 }
+
+fun exportDataToExcel (context: Context, meterData: List<Pair<String, String>>) {
+    val workbook = HSSFWorkbook()
+    val sheet = workbook.createSheet("Consumos")
+
+    val headerRow = sheet.createRow(0)
+    headerRow.createCell(0).setCellValue("Medidor")
+    headerRow.createCell(1).setCellValue("Consumo")
+
+    meterData.forEachIndexed { index, (meter, consumption) ->
+        val row = sheet.createRow(index + 1)
+        row.createCell(0).setCellValue(meter)
+        row.createCell(1).setCellValue(consumption)
+    }
+
+    val contentValues = ContentValues().apply {
+        put(MediaStore.MediaColumns.DISPLAY_NAME, "consumos.xls")
+        put(MediaStore.MediaColumns.MIME_TYPE, "application/vnd.ms-excel")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS)
+        }
+    }
+
+    val contentResolver = context.contentResolver
+    val uri = contentResolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
+    if (uri != null) {
+        contentResolver.openOutputStream(uri)?.use { outputStream ->
+            workbook.write(outputStream)
+            Toast.makeText(context, "Archivo Excel guardado en archivos", Toast.LENGTH_LONG).show()
+        }
+        workbook.close()
+    } else {
+        Toast.makeText(context, "Error al guardar el Excel", Toast.LENGTH_LONG).show()
+    }
+}
+
 
 fun saveMeterData(context: Context, meterData: List<Pair<String, String>>) {
     val sharedPreferences = context.getSharedPreferences("MeterData", Context.MODE_PRIVATE)
